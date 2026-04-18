@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Edit, Trash2, Package, Search, ExternalLink, ShoppingBag } from "lucide-react";
+import { Plus, Edit, Trash2, Package, Search, ShoppingBag, DollarSign, TrendingUp } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 type ProductSize = {
   id: string;
@@ -19,22 +20,39 @@ type Product = {
   images: string[];
 };
 
+type SellerStats = {
+  totalSales: number;
+  totalRevenue: number;
+  salesByProduct: { name: string; quantity: number; revenue: number }[];
+};
+
 export default function SellerDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [stats, setStats] = useState<SellerStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchProducts();
+    fetchStats();
   }, []);
 
   const fetchProducts = async () => {
     try {
       const res = await fetch("/api/seller/products");
       const data = await res.json();
-      if (res.ok) {
-        setProducts(data);
-      }
-    } catch {
+      if (res.ok) setProducts(data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const res = await fetch("/api/seller/stats");
+      const data = await res.json();
+      if (res.ok) setStats(data);
+    } catch (e) {
+      console.error(e);
     } finally {
       setLoading(false);
     }
@@ -62,50 +80,95 @@ export default function SellerDashboard() {
   );
 
   return (
-    <div className="space-y-8 animate-in fade-in">
+    <div className="space-y-8 animate-in fade-in pb-16 pt-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-neutral-900 tracking-tight">Panel de Ventas</h1>
-          <p className="text-gray-500 mt-1">Gestiona tu catálogo, inventario y variantes de calzado.</p>
+          <h1 className="text-3xl font-extrabold text-neutral-900 tracking-tight">Análisis de Ventas</h1>
+          <p className="text-gray-500 mt-1 font-medium">Visualiza tus ingresos, rastrea tu inventario y gestiona publicaciones.</p>
         </div>
         <Link
           href="/seller/products/new"
-          className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-medium shadow-sm hover:bg-indigo-700 transition-all hover:shadow-md"
+          className="flex items-center gap-2 bg-neutral-900 text-white px-6 py-3 rounded-xl font-bold shadow-xl hover:-translate-y-1 hover:shadow-2xl transition-all"
         >
           <Plus className="w-5 h-5" />
           Nueva Zapatilla
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-          <div className="bg-indigo-50 p-4 rounded-xl text-indigo-600">
-            <Package className="w-6 h-6" />
+      {/* METRIC CARDS HEADER */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex items-center gap-4 hover:border-indigo-100 transition-colors">
+          <div className="bg-green-50 p-4 rounded-2xl text-green-600">
+            <DollarSign className="w-8 h-8" />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Zapatillas Publicadas</p>
-            <p className="text-2xl font-bold text-neutral-900">{totalProducts}</p>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Ingresos Totales</p>
+            <p className="text-3xl font-extrabold text-neutral-900">${stats?.totalRevenue.toFixed(2) || "0.00"}</p>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-          <div className="bg-green-50 p-4 rounded-xl text-green-600">
-            <Package className="w-6 h-6" />
+        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex items-center gap-4 hover:border-indigo-100 transition-colors">
+          <div className="bg-blue-50 p-4 rounded-2xl text-blue-600">
+            <TrendingUp className="w-8 h-8" />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Stock Total (Pares)</p>
-            <p className="text-2xl font-bold text-neutral-900">{totalStock}</p>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Pares Vendidos</p>
+            <p className="text-3xl font-extrabold text-neutral-900">{stats?.totalSales || 0}</p>
+          </div>
+        </div>
+        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex items-center gap-4 hover:border-indigo-100 transition-colors">
+          <div className="bg-indigo-50 p-4 rounded-2xl text-indigo-600">
+            <Package className="w-8 h-8" />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Publicaciones</p>
+            <p className="text-3xl font-extrabold text-neutral-900">{totalProducts}</p>
+          </div>
+        </div>
+        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex items-center gap-4 hover:border-indigo-100 transition-colors">
+          <div className="bg-amber-50 p-4 rounded-2xl text-amber-600">
+            <ShoppingBag className="w-8 h-8" />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Stock Restante</p>
+            <p className="text-3xl font-extrabold text-neutral-900">{totalStock}</p>
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 overflow-hidden">
-        <div className="border-b border-gray-100 bg-gray-50/50 p-4 flex items-center gap-4">
-          <div className="relative flex-1 max-w-md">
+      {/* CHART & VISUALS */}
+      {stats && stats.salesByProduct.length > 0 && (
+        <div className="bg-white p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
+          <h2 className="text-xl font-bold text-neutral-900 mb-6 flex items-center gap-2"><TrendingUp className="text-indigo-600"/> Rendimiento por Zapatilla (Top 5)</h2>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={stats.salesByProduct} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} />
+                <Tooltip 
+                  cursor={{ fill: '#F3F4F6' }}
+                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                  formatter={(value: number, name: string) => [name === 'quantity' ? `${value} pares` : `$${value}`, name === 'quantity' ? 'Vendidos' : 'Ingresos']}
+                />
+                <Bar dataKey="quantity" fill="#4F46E5" radius={[6, 6, 0, 0]} maxBarSize={60} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
+      {/* CRUD TABLE */}
+      <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 overflow-hidden mt-12">
+        <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+          <h2 className="text-xl font-bold text-neutral-900 flex items-center gap-2">
+            <Package className="text-indigo-600"/> Inventario de Tienda
+          </h2>
+          <div className="relative max-w-sm w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input 
               type="text" 
-              placeholder="Buscar zapatos..." 
-              className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="Filtro rápido (Pronto)..." 
+              className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               disabled
             />
           </div>
@@ -114,75 +177,76 @@ export default function SellerDashboard() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-gray-100 bg-white">
-                <th className="px-6 py-4 font-medium text-sm text-gray-500 uppercase tracking-wider">Producto</th>
-                <th className="px-6 py-4 font-medium text-sm text-gray-500 uppercase tracking-wider text-center">Categoría</th>
-                <th className="px-6 py-4 font-medium text-sm text-gray-500 uppercase tracking-wider text-center">Talles (Stock)</th>
-                <th className="px-6 py-4 font-medium text-sm text-gray-500 uppercase tracking-wider text-right">Precio</th>
-                <th className="px-6 py-4 font-medium text-sm text-gray-500 uppercase tracking-wider text-right">Acciones</th>
+              <tr className="border-b border-gray-100 bg-gray-50/50">
+                <th className="px-6 py-4 font-bold text-xs text-gray-500 uppercase tracking-wider">Producto</th>
+                <th className="px-6 py-4 font-bold text-xs text-gray-500 uppercase tracking-wider text-center">Categoría</th>
+                <th className="px-6 py-4 font-bold text-xs text-gray-500 uppercase tracking-wider text-center">Talles & Stock</th>
+                <th className="px-6 py-4 font-bold text-xs text-gray-500 uppercase tracking-wider text-right">Precio Unit.</th>
+                <th className="px-6 py-4 font-bold text-xs text-gray-500 uppercase tracking-wider text-right">Gestión</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
               {loading ? (
                 <tr>
                   <td colSpan={5} className="py-12 text-center text-gray-400">
-                    Cargando catálogo...
+                    Cargando información...
                   </td>
                 </tr>
               ) : products.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-gray-400">
-                    <Package className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-                    <p>No has publicado ninguna zapatilla todavía.</p>
+                  <td colSpan={5} className="py-20 text-center text-gray-400">
+                    <Package className="w-16 h-16 mx-auto text-gray-200 mb-4" />
+                    <p className="text-lg font-medium text-neutral-900">Tu vitrina está vacía</p>
+                    <p className="text-sm mt-1">Crea tu primera zapatailal desde el botón Nueva Zapatilla.</p>
                   </td>
                 </tr>
               ) : (
                 products.map((product) => (
-                  <tr key={product.id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="px-6 py-4">
+                  <tr key={product.id} className="hover:bg-gray-50/80 transition-colors group">
+                    <td className="px-6 py-5">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-lg bg-gray-100 flex-shrink-0 flex justify-center items-center overflow-hidden border border-gray-200">
+                        <div className="w-14 h-14 rounded-2xl bg-gray-50 flex-shrink-0 flex justify-center items-center overflow-hidden border border-gray-100 group-hover:border-indigo-100 transition-colors">
                           {product.images?.[0] ? (
                             <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
                           ) : (
-                            <ShoppingBag className="w-5 h-5 text-gray-400" />
+                            <ShoppingBag className="w-6 h-6 text-gray-300" />
                           )}
                         </div>
                         <div>
-                          <p className="font-semibold text-neutral-900">{product.name}</p>
-                          <p className="text-xs text-gray-500 line-clamp-1">{product.id}</p>
+                          <p className="font-bold text-neutral-900 text-base">{product.name}</p>
+                          <p className="text-xs text-gray-400 font-mono mt-0.5">#{product.id.slice(-8).toUpperCase()}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-md">
+                    <td className="px-6 py-5 text-center">
+                      <span className="inline-flex px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold uppercase tracking-wider rounded-lg">
                         {product.category}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="flex flex-wrap gap-1 justify-center max-w-[200px] mx-auto">
+                    <td className="px-6 py-5 text-center">
+                      <div className="flex flex-wrap gap-1.5 justify-center max-w-[220px] mx-auto">
                         {product.sizes.map((s) => (
-                          <span key={s.id} className="inline-flex text-xs font-medium px-1.5 py-0.5 rounded border border-gray-200 bg-white shadow-sm" title={`Stock: ${s.stock}`}>
-                            {s.size} <span className="text-gray-400 ml-1">({s.stock})</span>
+                          <span key={s.id} className={`inline-block text-[11px] font-bold px-2 py-0.5 rounded-md border ${s.stock === 0 ? 'bg-red-50 text-red-600 border-red-100' : 'bg-white text-gray-700 border-gray-200 shadow-sm'}`} title={`Stock de la talla ${s.size}: ${s.stock} pares`}>
+                            {s.size} <span className={s.stock === 0 ? 'text-red-400' : 'text-gray-400'}>({s.stock})</span>
                           </span>
                         ))}
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <p className="font-semibold text-neutral-900">${product.price.toFixed(2)}</p>
+                    <td className="px-6 py-5 text-right">
+                      <p className="font-extrabold text-neutral-900">${product.price.toFixed(2)}</p>
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end gap-2">
+                    <td className="px-6 py-5 text-right">
+                      <div className="flex justify-end gap-1">
                         <Link
                           href={`/seller/products/edit/${product.id}`}
-                          className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                          className="p-2.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
                           title="Editar"
                         >
                           <Edit className="w-4 h-4" />
                         </Link>
                         <button
                           onClick={() => handleDelete(product.id)}
-                          className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-2.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
                           title="Eliminar"
                         >
                           <Trash2 className="w-4 h-4" />

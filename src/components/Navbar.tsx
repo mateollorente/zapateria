@@ -42,7 +42,10 @@ export default function Navbar() {
           {status === "loading" ? (
             <div className="h-8 w-20 bg-gray-200 animate-pulse rounded-md ml-4" />
           ) : session ? (
-            <div className="flex items-center gap-4 border-l border-gray-200 pl-6 ml-2">
+            <div className="flex items-center gap-6 border-l border-gray-200 pl-6 ml-2">
+              <Link href="/profile" className="text-sm font-medium text-gray-500 hover:text-indigo-600 transition-colors">
+                Mi Perfil
+              </Link>
               <span className="text-sm font-medium text-gray-700 bg-white border border-gray-200 px-3 py-1 rounded-full shadow-sm">
                 {session.user.name || session.user.email} <span className="text-xs text-indigo-600 ml-1 font-bold">({session.user.role === 'BUYER' ? 'Comprador' : 'Vendedor'})</span>
               </span>
