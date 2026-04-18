@@ -30,6 +30,9 @@ export default function Navbar() {
               <Link href="/favorites" className="text-sm font-medium text-gray-500 hover:text-indigo-600 transition-colors">
                 Favoritos
               </Link>
+              <Link href="/orders" className="text-sm font-medium text-gray-500 hover:text-indigo-600 transition-colors">
+                Mis Compras
+              </Link>
               <Link href="/cart" className="text-sm font-medium text-gray-500 hover:text-indigo-600 transition-colors">
                 Carrito
               </Link>

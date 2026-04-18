@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Loader2, ShoppingBag, Minus, Plus, Trash2, ArrowRight, ShieldCheck } from "lucide-react";
 
 type CartItem = {
@@ -25,6 +26,8 @@ type CartItem = {
 export default function CartPage() {
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     fetchCart();
@@ -84,6 +87,23 @@ export default function CartPage() {
   };
 
   const subtotal = items.reduce((acc, item) => acc + item.productSize.product.price * item.quantity, 0);
+
+  const handleCheckout = async () => {
+    setIsCheckingOut(true);
+    try {
+      const res = await fetch("/api/orders", { method: "POST" });
+      if (res.ok) {
+        router.push("/orders");
+      } else {
+        const data = await res.json();
+        alert(data.error || "Error al generar la compra");
+      }
+    } catch {
+      alert("Error de red");
+    } finally {
+      setIsCheckingOut(false);
+    }
+  };
 
   return (
     <div className="w-full max-w-6xl mx-auto flex-1 pt-6 pb-12 animate-in fade-in">
@@ -182,8 +202,12 @@ export default function CartPage() {
               <p className="text-xs text-gray-500 mt-1">Impuestos incluidos si aplican.</p>
             </div>
 
-            <button className="w-full py-4 bg-neutral-900 text-white rounded-xl font-bold text-lg hover:bg-neutral-800 transition-all shadow-xl shadow-neutral-200 mb-4 flex items-center justify-center gap-2 hover:scale-[1.02]">
-              Proceder al Pago
+            <button 
+              onClick={handleCheckout}
+              disabled={isCheckingOut}
+              className="w-full py-4 bg-neutral-900 text-white rounded-xl font-bold text-lg hover:bg-neutral-800 transition-all shadow-xl shadow-neutral-200 mb-4 flex items-center justify-center gap-2 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isCheckingOut ? <Loader2 className="w-5 h-5 animate-spin" /> : "Pagar Orden (Simulado)"}
             </button>
             <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
               <ShieldCheck className="w-4 h-4 text-green-600" />
