@@ -91,12 +91,13 @@ export default function CartPage() {
   const handleCheckout = async () => {
     setIsCheckingOut(true);
     try {
-      const res = await fetch("/api/orders", { method: "POST" });
+      const res = await fetch("/api/checkout", { method: "POST" });
       if (res.ok) {
-        router.push("/orders");
+        const data = await res.json();
+        window.location.href = data.init_point; // <-- Magia de MP
       } else {
         const data = await res.json();
-        alert(data.error || "Error al generar la compra");
+        alert(data.error || "Error al conectar con la pasarela de pago");
       }
     } catch {
       alert("Error de red");
