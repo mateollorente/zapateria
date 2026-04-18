@@ -1,0 +1,194 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// -------------------------------------
+// NextAuth Models 
+// -------------------------------------
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// -------------------------------------
+// Application Models
+// -------------------------------------
+
+enum Role {
+  BUYER
+  SELLER
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  password      String?
+  image         String?
+  role          Role      @default(BUYER)
+  phone         String?
+  address       String?
+  createdAt     DateTime  @default(now())
+
+  accounts      Account[]
+  sessions      Session[]
+
+  products      Product[] // Only if role is SELLER
+  orders        Order[]   @relation("UserOrders")
+  favorites     Favorite[]
+  reviews       Review[]
+  cart          Cart?
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  price       Float
+  category    String
+  images      String[] // Prisma supports string array in Postgres
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sellerId    String
+  seller      User     @relation(fields: [sellerId], references: [id])
+  
+  sizes       ProductSize[]
+  favorites   Favorite[]
+  reviews     Review[]
+  orderItems  OrderItem[]
+}
+
+model ProductSize {
+  id        String  @id @default(cuid())
+  productId String
+  size      String  // e.g. "38", "39", "40"
+  stock     Int
+
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cartItems CartItem[]
+
+  @@unique([productId, size])
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+}
+
+model Cart {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+}
+
+model CartItem {
+  id            String   @id @default(cuid())
+  cartId        String
+  productSizeId String
+  quantity      Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  cart        Cart        @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productSize ProductSize @relation(fields: [productSizeId], references: [id], onDelete: Cascade)
+
+  @@unique([cartId, productSizeId])
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+model Order {
+  id             String      @id @default(cuid())
+  buyerId        String
+  total          Float
+  status         OrderStatus @default(PENDING)
+  mpPreferenceId String?
+  mpPaymentId    String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  buyer          User        @relation("UserOrders", fields: [buyerId], references: [id])
+  items          OrderItem[]
+}
+
+model OrderItem {
+  id            String   @id @default(cuid())
+  orderId       String
+  productId     String   
+  size          String   // Snapshot of the size selected
+  quantity      Int
+  price         Float    // Snapshot of unit price at the time of purchase
+  
+  order         Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product       Product     @relation(fields: [productId], references: [id])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int      // 1-5
+  comment   String?
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+}
