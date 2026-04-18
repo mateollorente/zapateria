@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Edit, Trash2, Package, Search, ExternalLink } from "lucide-react";
+import { Plus, Edit, Trash2, Package, Search, ExternalLink, ShoppingBag } from "lucide-react";
 
 type ProductSize = {
   id: string;

@@ -67,9 +67,16 @@ export default function EditProductPage() {
     setError("");
 
     try {
+      const validImages = images.filter(i => i.trim() !== "");
+      if (validImages.length === 0) {
+        setError("Imágenes requeridas: Por favor agrega al menos un enlace a una imagen tuya.");
+        setSaving(false);
+        return;
+      }
+
       const payload = {
         ...form,
-        images: images.filter(i => i.trim() !== ""),
+        images: validImages,
         sizes: sizes.filter(s => s.size.trim() !== "" && s.stock.trim() !== ""),
       };
 

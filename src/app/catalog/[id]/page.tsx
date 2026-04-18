@@ -28,6 +28,40 @@ export default function ProductDetailPage() {
 
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [mainImage, setMainImage] = useState<string>("");
+  
+  const [isFav, setIsFav] = useState(false);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [addedToCart, setAddedToCart] = useState(false);
+
+  const addToCart = async () => {
+    if (session?.user?.role !== "BUYER") {
+      alert("Debes iniciar sesión como comprador para usar el carrito.");
+      return;
+    }
+    
+    if (!selectedSize) return;
+
+    setAddingToCart(true);
+    try {
+      const sizeStr = product?.sizes.find(s => s.id === selectedSize)?.size;
+      const res = await fetch("/api/cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: id, size: sizeStr })
+      });
+      if (res.ok) {
+        setAddedToCart(true);
+        setTimeout(() => setAddedToCart(false), 3000);
+      } else {
+        const data = await res.json();
+        alert(data.error || "No se pudo añadir al carrito.");
+      }
+    } catch (e) {
+      alert("Error al añadir al carrito");
+    } finally {
+      setAddingToCart(false);
+    }
+  };
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -47,7 +81,38 @@ export default function ProductDetailPage() {
       }
     };
     fetchDetail();
-  }, [id]);
+    
+    // Si somos comprador, buscar si es favorito
+    if (session?.user?.role === "BUYER") {
+      fetch("/api/favorites")
+        .then(r => r.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            const hasIt = data.some((f: any) => f.productId === id);
+            setIsFav(hasIt);
+          }
+        })
+        .catch(e => console.error(e));
+    }
+  }, [id, session]);
+
+  const toggleFav = async () => {
+    if (session?.user?.role !== "BUYER") {
+      alert("Debes iniciar sesión como comprador para guardar favoritos.");
+      return;
+    }
+    
+    setIsFav(!isFav);
+    try {
+      await fetch("/api/favorites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: id })
+      });
+    } catch {
+      setIsFav(isFav); // rollback
+    }
+  };
 
   if (loading) {
     return (
@@ -85,8 +150,11 @@ export default function ProductDetailPage() {
               <ShoppingBag className="w-24 h-24 text-gray-200" />
             )}
             
-            <button className="absolute top-4 right-4 p-3 bg-white/80 backdrop-blur rounded-full text-gray-400 hover:text-red-500 transition-colors shadow-sm">
-              <Heart className="w-6 h-6" />
+            <button 
+              onClick={toggleFav}
+              className={`absolute top-4 right-4 p-3 backdrop-blur rounded-full shadow-sm transition-all border ${isFav ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-white/80 text-gray-400 hover:text-indigo-600 border-gray-100'}`}
+            >
+              <Heart className="w-6 h-6" fill={isFav ? "currentColor" : "none"} />
             </button>
           </div>
 
@@ -162,15 +230,18 @@ export default function ProductDetailPage() {
 
           <div className="pt-6">
             <button 
-              disabled={isOutOfStock || !selectedSize}
+              disabled={isOutOfStock || !selectedSize || addingToCart}
+              onClick={addToCart}
               className={`w-full py-4 rounded-xl font-bold text-lg transition-all flex justify-center items-center gap-2 ${
                 isOutOfStock || !selectedSize
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-neutral-900 text-white hover:bg-neutral-800 shadow-xl shadow-neutral-200 hover:scale-[1.02]'
+                  : addedToCart
+                    ? 'bg-green-600 text-white shadow-lg hover:scale-[1.02]'
+                    : 'bg-neutral-900 text-white hover:bg-neutral-800 shadow-xl shadow-neutral-200 hover:scale-[1.02]'
               }`}
             >
-              <ShoppingBag className="w-5 h-5" />
-              {isOutOfStock ? 'Producto Agotado' : !selectedSize ? 'Selecciona una talla para añadir' : 'Añadir al Carrito'}
+              {addedToCart ? <CheckCircle2 className="w-5 h-5" /> : (addingToCart ? <Loader2 className="w-5 h-5 animate-spin"/> : <ShoppingBag className="w-5 h-5" />)}
+              {isOutOfStock ? 'Producto Agotado' : !selectedSize ? 'Selecciona una talla para añadir' : addedToCart ? '¡Añadido al Carrito!' : 'Añadir al Carrito'}
             </button>
             {session?.user?.role !== 'BUYER' && (
               <p className="text-center text-sm text-red-500 font-medium mt-3">

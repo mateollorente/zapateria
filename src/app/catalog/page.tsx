@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Search, SlidersHorizontal, ChevronLeft, ChevronRight, Loader2, ShoppingBag } from "lucide-react";
+import { Search, SlidersHorizontal, ChevronLeft, ChevronRight, Loader2, ShoppingBag, Heart } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 type Product = {
   id: string;
@@ -14,8 +15,10 @@ type Product = {
 };
 
 export default function CatalogPage() {
+  const { data: session } = useSession();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   
   // Filtros
   const [q, setQ] = useState("");
@@ -24,8 +27,6 @@ export default function CatalogPage() {
   const [maxPrice, setMaxPrice] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-
-  // Debounce para búsqueda
   const [debouncedQ, setDebouncedQ] = useState(q);
 
   useEffect(() => {
@@ -59,6 +60,43 @@ export default function CatalogPage() {
   useEffect(() => {
     fetchProducts();
   }, [debouncedQ, category, minPrice, maxPrice, page]);
+
+  useEffect(() => {
+    if (session?.user?.role === "BUYER") {
+      fetch("/api/favorites")
+        .then(r => r.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            setFavoriteIds(new Set(data.map((f: any) => f.productId)));
+          }
+        })
+        .catch(e => console.error(e));
+    }
+  }, [session]);
+
+  const toggleFav = async (e: React.MouseEvent, productId: string) => {
+    e.preventDefault(); // previene navegación del card en Next
+    
+    if (session?.user?.role !== "BUYER") {
+      alert("Debes iniciar sesión como comprador para guardar favoritos.");
+      return;
+    }
+    
+    const newFavs = new Set(favoriteIds);
+    if (newFavs.has(productId)) newFavs.delete(productId);
+    else newFavs.add(productId);
+    setFavoriteIds(newFavs);
+
+    try {
+      await fetch("/api/favorites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId })
+      });
+    } catch (e) {
+      // rollback you could implement
+    }
+  };
 
   return (
     <div className="flex flex-col md:flex-row gap-8 items-start animate-in fade-in pb-12 w-full pt-4">
@@ -152,9 +190,19 @@ export default function CatalogPage() {
             <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 transition-opacity ${loading ? "opacity-50" : "opacity-100"}`}>
               {products.map((p) => {
                 const isOutOfStock = p.sizes.every(s => s.stock === 0);
-                
+                const isFav = favoriteIds.has(p.id);
+
                 return (
-                  <Link href={`/catalog/${p.id}`} key={p.id} className="group flex flex-col bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all hover:-translate-y-1">
+                  <Link href={`/catalog/${p.id}`} key={p.id} className="group flex flex-col bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all hover:-translate-y-1 relative">
+                    
+                    <button 
+                      onClick={(e) => toggleFav(e, p.id)}
+                      className={`absolute top-3 right-3 z-10 p-2.5 backdrop-blur rounded-full shadow-sm transition-all border ${isFav ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-white/90 text-gray-400 hover:text-indigo-600 border-gray-100'}`}
+                      title={isFav ? "Quitar de Favoritos" : "Añadir a Favoritos"}
+                    >
+                      <Heart className="w-5 h-5" fill={isFav ? "currentColor" : "none"} />
+                    </button>
+
                     <div className="aspect-[4/3] bg-gray-100 relative overflow-hidden">
                       {p.images?.[0] ? (
                         <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -165,7 +213,7 @@ export default function CatalogPage() {
                       )}
                       
                       {isOutOfStock && (
-                        <div className="absolute top-3 right-3 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm">
+                        <div className="absolute top-3 left-3 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm">
                           AGOTADO
                         </div>
                       )}
