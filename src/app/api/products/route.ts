@@ -35,6 +35,7 @@ export async function GET(req: Request) {
       where,
       include: {
         sizes: true,
+        reviews: { select: { rating: true } }
       },
       skip: (page - 1) * limit,
       take: limit,

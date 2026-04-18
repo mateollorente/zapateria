@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Search, SlidersHorizontal, ChevronLeft, ChevronRight, Loader2, ShoppingBag, Heart } from "lucide-react";
+import { Search, SlidersHorizontal, ChevronLeft, ChevronRight, Loader2, ShoppingBag, Heart, Star } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 type Product = {
@@ -12,6 +12,7 @@ type Product = {
   category: string;
   images: string[];
   sizes: { id: string; size: string; stock: number }[];
+  reviews?: { rating: number }[];
 };
 
 export default function CatalogPage() {
@@ -224,7 +225,16 @@ export default function CatalogPage() {
                         <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md">
                           {p.category}
                         </span>
-                        <span className="text-lg font-bold text-neutral-900">${p.price.toFixed(2)}</span>
+                        <div className="flex flex-col items-end">
+                          <span className="text-lg font-bold text-neutral-900">${p.price.toFixed(2)}</span>
+                          {p.reviews && p.reviews.length > 0 && (
+                            <span className="flex items-center text-xs font-medium text-amber-500 mt-0.5">
+                              <Star className="w-3 h-3 fill-amber-500 mr-0.5" /> 
+                              {(p.reviews.reduce((a, b) => a + b.rating, 0) / p.reviews.length).toFixed(1)} 
+                              <span className="text-gray-400 ml-1">({p.reviews.length})</span>
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <h3 className="font-bold text-neutral-900 text-lg line-clamp-1">{p.name}</h3>
                       <p className="text-sm text-gray-500 mt-1 flex-1 line-clamp-2">{p.sizes.map(s => s.size).join(" • ")}</p>
