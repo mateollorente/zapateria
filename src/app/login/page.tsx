@@ -63,7 +63,7 @@ export default function LoginPage() {
                 name="email"
                 type="email"
                 required
-                className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all"
+                className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl text-neutral-900 leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all"
                 placeholder="tu@email.com"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -80,7 +80,7 @@ export default function LoginPage() {
                 name="password"
                 type="password"
                 required
-                className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all"
+                className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl text-neutral-900 leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all"
                 placeholder="Tu contraseña secreta"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
