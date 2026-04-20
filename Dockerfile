@@ -1,5 +1,5 @@
 FROM node:20-alpine AS base
-
+RUN apk add --no-cache openssl
 # Fase 1: Dependencias
 FROM base AS deps
 RUN apk add --no-cache libc6-compat
@@ -22,6 +22,7 @@ WORKDIR /app
 
 ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1
+ENV HOSTNAME="0.0.0.0"
 
 # Copiar el repositorio buildeado
 COPY --from=builder /app ./

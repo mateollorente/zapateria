@@ -38,8 +38,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No autorizado" }, { status: 403 });
     }
 
-    // Proceso transaccional para garantizar consistencia entre stock y orden
-    const orderResult = await prisma.$transaction(async (tx) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const orderResult = await prisma.$transaction(async (tx: any) => {
       
       // 1. Encontrar carrito
       const cart = await tx.cart.findUnique({
@@ -66,7 +66,7 @@ export async function POST(req: Request) {
         }
       }
 
-      const totalAmount = cart.items.reduce((acc, item) => acc + (item.quantity * item.productSize.product.price), 0);
+      const totalAmount = cart.items.reduce((acc: number, item: any) => acc + (item.quantity * item.productSize.product.price), 0);
 
       // 3. Crear cabecera de Orden (Mocked as PAID for Day 7 to simulate stock deduct, will change with MP in Day 8)
       const newOrder = await tx.order.create({
@@ -75,7 +75,7 @@ export async function POST(req: Request) {
           total: totalAmount,
           status: "PAID",
           items: {
-            create: cart.items.map(item => ({
+            create: cart.items.map((item: any) => ({
               productId: item.productSize.productId,
               size: item.productSize.size,
               quantity: item.quantity,

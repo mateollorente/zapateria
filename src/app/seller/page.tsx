@@ -148,7 +148,7 @@ export default function SellerDashboard() {
                 <Tooltip 
                   cursor={{ fill: '#F3F4F6' }}
                   contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                  formatter={(value: number, name: string) => [name === 'quantity' ? `${value} pares` : `$${value}`, name === 'quantity' ? 'Vendidos' : 'Ingresos']}
+                  formatter={(value: any, name: any) => [name === 'quantity' ? `${value} pares` : `$${value}`, name === 'quantity' ? 'Vendidos' : 'Ingresos']}
                 />
                 <Bar dataKey="quantity" fill="#4F46E5" radius={[6, 6, 0, 0]} maxBarSize={60} />
               </BarChart>

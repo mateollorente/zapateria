@@ -37,12 +37,12 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
        });
        canReview = !!bought;
        
-       existingReview = product.reviews.find(r => r.userId === session.user.id) || null;
+       existingReview = product.reviews.find((r: any) => r.userId === session.user.id) || null;
     }
 
     // Computar Promedio de la Zapatilla
     const avgScore = product.reviews.length > 0 
-      ? product.reviews.reduce((a, b) => a + b.rating, 0) / product.reviews.length 
+      ? product.reviews.reduce((a: number, b: any) => a + b.rating, 0) / product.reviews.length 
       : 0;
 
     // Computar Promedio Histórico del Vendedor
@@ -50,7 +50,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
       where: { product: { sellerId: product.seller.id } }
     });
     const sellerAvgScore = sellerReviews.length > 0 
-      ? sellerReviews.reduce((a, b) => a + b.rating, 0) / sellerReviews.length 
+      ? sellerReviews.reduce((a: number, b: any) => a + b.rating, 0) / sellerReviews.length 
       : 0;
 
     const related = await prisma.product.findMany({

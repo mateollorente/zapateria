@@ -15,7 +15,8 @@ export async function POST(req: Request) {
       throw new Error("El Vendedor no ha configurado MercadoPago actualmente (MP_ACCESS_TOKEN)");
     }
 
-    const orderPayload = await prisma.$transaction(async (tx) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const orderPayload = await prisma.$transaction(async (tx: any) => {
       const cart = await tx.cart.findUnique({
         where: { userId: session.user.id },
         include: {
@@ -31,7 +32,7 @@ export async function POST(req: Request) {
         }
       }
 
-      const totalAmount = cart.items.reduce((acc, item) => acc + (item.quantity * item.productSize.product.price), 0);
+      const totalAmount = cart.items.reduce((acc: number, item: any) => acc + (item.quantity * item.productSize.product.price), 0);
 
       const newOrder = await tx.order.create({
         data: {
@@ -39,7 +40,7 @@ export async function POST(req: Request) {
           total: totalAmount,
           status: "PENDING", // Se mantendrá PENDING hasta que MP mande el webhook de Success
           items: {
-            create: cart.items.map(item => ({
+            create: cart.items.map((item: any) => ({
               productId: item.productSize.productId,
               size: item.productSize.size,
               quantity: item.quantity,
@@ -71,7 +72,7 @@ export async function POST(req: Request) {
     const host = req.headers.get("host") || "localhost:3000";   
     const baseUrl = `${protocol}://${host}`;
 
-    const itemsForMP = orderPayload.cartItems.map(item => ({
+    const itemsForMP = orderPayload.cartItems.map((item: any) => ({
        id: item.productSize.productId,
        title: item.productSize.product.name + ` (Talla: ${item.productSize.size})`,
        quantity: item.quantity,
