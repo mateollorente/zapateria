@@ -17,7 +17,7 @@ export default function NewProductPage() {
     category: "URBAN",
   });
 
-  const [images, setImages] = useState<string[]>([""]);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [sizes, setSizes] = useState<{ size: string; stock: string }[]>([
     { size: "", stock: "" }
   ]);
@@ -28,16 +28,33 @@ export default function NewProductPage() {
     setError("");
 
     try {
-      const validImages = images.filter(i => i.trim() !== "");
-      if (validImages.length === 0) {
-        setError("Imágenes requeridas: Por favor agrega al menos un enlace a una imagen tuya.");
+      if (imageFiles.length === 0) {
+        setError("Imágenes requeridas: Por favor sube al menos una imagen.");
         setLoading(false);
         return;
       }
 
+      let uploadedImageUrls: string[] = [];
+      const formData = new FormData();
+      imageFiles.forEach((file) => formData.append("images", file));
+
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!uploadRes.ok) {
+        setError("Error al subir las imágenes.");
+        setLoading(false);
+        return;
+      }
+
+      const uploadData = await uploadRes.json();
+      uploadedImageUrls = uploadData.urls;
+
       const payload = {
         ...form,
-        images: validImages,
+        images: uploadedImageUrls,
         sizes: sizes.filter(s => s.size.trim() !== "" && s.stock.trim() !== ""),
       };
 
@@ -97,7 +114,7 @@ export default function NewProductPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Precio (USD)</label>
+              <label className="text-sm font-medium text-gray-700">Precio (ARS)</label>
               <input
                 required
                 type="number"
@@ -199,45 +216,30 @@ export default function NewProductPage() {
 
         <div className="p-6 bg-white rounded-2xl shadow-sm border border-gray-100 space-y-6">
            <div className="flex justify-between border-b border-gray-100 pb-2">
-            <h2 className="text-lg font-bold text-neutral-900">Imágenes (URLs)</h2>
-            <button
-              type="button"
-              onClick={() => setImages([...images, ""])}
-              className="text-sm font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
-            >
-              <Plus className="w-4 h-4" /> Añadir Foto
-            </button>
+            <h2 className="text-lg font-bold text-neutral-900">Imágenes</h2>
           </div>
           
           <p className="text-sm text-gray-500 bg-blue-50 text-blue-800 p-3 rounded-lg flex items-center gap-2">
-            <LinkIcon className="w-4 h-4" /> Ingresa enlaces directos a las imágenes de tus productos por ahora.
+            <LinkIcon className="w-4 h-4" /> Puedes subir varias imágenes seleccionándolas desde tu dispositivo.
           </p>
 
           <div className="space-y-4">
-            {images.map((img, idx) => (
-              <div key={idx} className="flex gap-4 items-center">
-                <input
-                  type="url"
-                  placeholder="https://ejemplo.com/imagen.jpg"
-                  className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                  value={img}
-                  onChange={(e) => {
-                    const newImgs = [...images];
-                    newImgs[idx] = e.target.value;
-                    setImages(newImgs);
-                  }}
-                />
-                {images.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => setImages(images.filter((_, i) => i !== idx))}
-                    className="p-3 text-red-500 hover:bg-red-50 rounded-xl border border-transparent hover:border-red-100 transition-colors"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
-                )}
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+              onChange={(e) => {
+                if (e.target.files) {
+                  setImageFiles(Array.from(e.target.files));
+                }
+              }}
+            />
+            {imageFiles.length > 0 && (
+              <div className="text-sm text-gray-600">
+                {imageFiles.length} archivo(s) seleccionado(s).
               </div>
-            ))}
+            )}
           </div>
         </div>
 

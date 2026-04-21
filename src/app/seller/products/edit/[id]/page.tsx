@@ -21,7 +21,8 @@ export default function EditProductPage() {
     category: "URBAN",
   });
 
-  const [images, setImages] = useState<string[]>([""]);
+  const [images, setImages] = useState<string[]>([]);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [sizes, setSizes] = useState<{ size: string; stock: string }[]>([
     { size: "", stock: "" }
   ]);
@@ -67,16 +68,36 @@ export default function EditProductPage() {
     setError("");
 
     try {
-      const validImages = images.filter(i => i.trim() !== "");
-      if (validImages.length === 0) {
-        setError("Imágenes requeridas: Por favor agrega al menos un enlace a una imagen tuya.");
+      let uploadedImageUrls: string[] = [];
+      if (imageFiles.length > 0) {
+        const formData = new FormData();
+        imageFiles.forEach((file) => formData.append("images", file));
+
+        const uploadRes = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!uploadRes.ok) {
+          setError("Error al subir las imágenes nuevas.");
+          setSaving(false);
+          return;
+        }
+
+        const uploadData = await uploadRes.json();
+        uploadedImageUrls = uploadData.urls;
+      }
+
+      const finalImages = [...images.filter(i => i.trim() !== ""), ...uploadedImageUrls];
+      if (finalImages.length === 0) {
+        setError("Imágenes requeridas: Por favor adjunta o mantén al menos una imagen.");
         setSaving(false);
         return;
       }
 
       const payload = {
         ...form,
-        images: validImages,
+        images: finalImages,
         sizes: sizes.filter(s => s.size.trim() !== "" && s.stock.trim() !== ""),
       };
 
@@ -145,7 +166,7 @@ export default function EditProductPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Precio (USD)</label>
+              <label className="text-sm font-medium text-gray-700">Precio (ARS)</label>
               <input
                 required
                 type="number"
@@ -247,22 +268,23 @@ export default function EditProductPage() {
 
         <div className="p-6 bg-white rounded-2xl shadow-sm border border-gray-100 space-y-6">
            <div className="flex justify-between border-b border-gray-100 pb-2">
-            <h2 className="text-lg font-bold text-neutral-900">Imágenes (URLs)</h2>
+            <h2 className="text-lg font-bold text-neutral-900">Imágenes</h2>
             <button
               type="button"
               onClick={() => setImages([...images, ""])}
               className="text-sm font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
             >
-              <Plus className="w-4 h-4" /> Añadir Foto
+              <Plus className="w-4 h-4" /> Añadir Foto (URL)
             </button>
           </div>
           
           <div className="space-y-4">
+            <label className="text-sm font-medium text-gray-700">Imágenes Actuales / URLs manuales</label>
             {images.map((img, idx) => (
               <div key={idx} className="flex gap-4 items-center">
                 <input
                   type="url"
-                  placeholder="https://ejemplo.com/imagen.jpg"
+                  placeholder="https://ejemplo.com/imagen.jpg o ruta /uploads/..."
                   className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                   value={img}
                   onChange={(e) => {
@@ -271,17 +293,35 @@ export default function EditProductPage() {
                     setImages(newImgs);
                   }}
                 />
-                {images.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => setImages(images.filter((_, i) => i !== idx))}
-                    className="p-3 text-red-500 hover:bg-red-50 rounded-xl border border-transparent hover:border-red-100 transition-colors"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setImages(images.filter((_, i) => i !== idx))}
+                  className="p-3 text-red-500 hover:bg-red-50 rounded-xl border border-transparent hover:border-red-100 transition-colors"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
               </div>
             ))}
+          </div>
+
+          <div className="space-y-4 border-t border-gray-100 pt-6">
+            <label className="text-sm font-medium text-gray-700 block">Subir Nuevas Fotos (Archivos)</label>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+              onChange={(e) => {
+                if (e.target.files) {
+                  setImageFiles(Array.from(e.target.files));
+                }
+              }}
+            />
+            {imageFiles.length > 0 && (
+              <div className="text-sm text-gray-600">
+                {imageFiles.length} archivo(s) local(es) listo(s) para añadir.
+              </div>
+            )}
           </div>
         </div>
 

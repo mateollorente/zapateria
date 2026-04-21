@@ -21,6 +21,7 @@ type Order = {
   total: number;
   status: "PENDING" | "PAID" | "CANCELLED";
   createdAt: string;
+  mpPreferenceId: string | null;
   items: OrderItem[];
 };
 
@@ -101,8 +102,16 @@ export default function OrdersPage() {
                     <p className="text-sm font-mono text-gray-600">#{o.id.slice(-8).toUpperCase()}</p>
                   </div>
                 </div>
-                <div>
+                <div className="flex items-center gap-3">
                   {getStatusBadge(o.status)}
+                  {o.status === "PENDING" && o.mpPreferenceId && (
+                    <a
+                      href={`https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${o.mpPreferenceId}`}
+                      className="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 shadow-sm transition-colors"
+                    >
+                      Reintentar Pago
+                    </a>
+                  )}
                 </div>
               </div>
 

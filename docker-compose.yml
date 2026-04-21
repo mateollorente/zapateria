@@ -26,3 +26,11 @@ services:
       - db
     # Nos aseguramos de forzar las tablas (push) a la db apenas inicia el contenedor por primera vez
     command: sh -c "npx prisma db push && npx next start -H 0.0.0.0 -p 3000"
+
+  cron:
+    image: curlimages/curl:latest
+    container_name: zapateria_cron
+    restart: unless-stopped
+    depends_on:
+      - app
+    command: /bin/sh -c "while true; do curl -X POST http://app:3000/api/cron/cancel-pending; sleep 300; done"

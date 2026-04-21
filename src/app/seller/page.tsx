@@ -86,13 +86,21 @@ export default function SellerDashboard() {
           <h1 className="text-3xl font-extrabold text-neutral-900 tracking-tight">Análisis de Ventas</h1>
           <p className="text-gray-500 mt-1 font-medium">Visualiza tus ingresos, rastrea tu inventario y gestiona publicaciones.</p>
         </div>
-        <Link
-          href="/seller/products/new"
-          className="flex items-center gap-2 bg-neutral-900 text-white px-6 py-3 rounded-xl font-bold shadow-xl hover:-translate-y-1 hover:shadow-2xl transition-all"
-        >
-          <Plus className="w-5 h-5" />
-          Nueva Zapatilla
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Link
+            href="/seller/orders"
+            className="flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 px-6 py-3 rounded-xl font-bold shadow-sm hover:-translate-y-1 hover:shadow-md transition-all"
+          >
+            Ver Detalles de Ventas
+          </Link>
+          <Link
+            href="/seller/products/new"
+            className="flex items-center justify-center gap-2 bg-neutral-900 text-white px-6 py-3 rounded-xl font-bold shadow-xl hover:-translate-y-1 hover:shadow-2xl transition-all"
+          >
+            <Plus className="w-5 h-5" />
+            Nueva Zapatilla
+          </Link>
+        </div>
       </div>
 
       {/* METRIC CARDS HEADER */}
