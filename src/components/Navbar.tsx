@@ -50,7 +50,10 @@ export default function Navbar() {
                 {session.user.name || session.user.email} <span className="text-xs text-indigo-600 ml-1 font-bold">({session.user.role === 'BUYER' ? 'Comprador' : 'Vendedor'})</span>
               </span>
               <button
-                onClick={() => signOut({ callbackUrl: "/" })}
+                onClick={async () => {
+                  await signOut({ redirect: false });
+                  window.location.href = "/";
+                }}
                 className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors flex items-center gap-2"
                 title="Cerrar Sessión"
               >

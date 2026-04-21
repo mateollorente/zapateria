@@ -85,9 +85,9 @@ export async function POST(req: Request) {
         items: itemsForMP,
         external_reference: orderPayload.newOrder.id,
         back_urls: {
-          success: `http://localhost:3000/orders`,
-          pending: `http://localhost:3000/orders`,
-          failure: `http://localhost:3000/cart`,
+          success: `${baseUrl}/orders`,
+          pending: `${baseUrl}/orders`,
+          failure: `${baseUrl}/cart`,
         },
         statement_descriptor: "MUNDO ZAPATERIA"
       }
