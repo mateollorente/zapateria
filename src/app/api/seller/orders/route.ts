@@ -32,7 +32,7 @@ export async function GET() {
 
     // Formatear los datos para el frontend agrupándolos por orden o dejándolos planos
     // Dejaremos una lista de sub-ordenes desde la perspectiva del vendedor
-    const sales = items.map(item => ({
+    const sales = items.map((item: any) => ({
       id: item.id,
       orderId: item.orderId,
       status: item.order.status,
