@@ -89,6 +89,8 @@ export async function POST(req: Request) {
           pending: `${baseUrl}/orders`,
           failure: `${baseUrl}/cart`,
         },
+        auto_return: "approved",
+        notification_url: `${baseUrl}/api/webhooks/mp`,
         statement_descriptor: "MUNDO ZAPATERIA"
       }
     });
