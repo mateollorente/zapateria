@@ -3,21 +3,24 @@ import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
 
 function verifyMercadoPagoSignature(
+  id: string,
   body: string,
   signature: string,
   secret: string
 ): boolean {
   if (!signature || !secret) return false;
 
-  const [ts, hash] = signature.split(",");
-  const tsValue = ts?.replace("t=", "");
-  const expectedHash = hash?.replace("v1=", "");
+  const [tsPart, hashPart] = signature.split(",");
+  const ts = tsPart?.replace("t=", "") || "";
+  const expectedHash = hashPart?.replace("v1=", "") || "";
 
-  if (!tsValue || !expectedHash) return false;
+  if (!ts || !expectedHash) return false;
 
+  const signedPayload = `${id}|${body}|${ts}`;
+  
   const localHash = crypto
     .createHmac("sha256", secret)
-    .update(body + tsValue)
+    .update(signedPayload)
     .digest("hex");
 
   return localHash === expectedHash;
@@ -34,21 +37,21 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
 
-    const signature = req.headers.get("x-signature") || "";
+    const signature = req.headers.get("X-Signature") || req.headers.get("x-signature") || "";
     const mpSecret = process.env.MP_WEBHOOK_SECRET || "";
-
-    if (mpSecret && signature && process.env.NODE_ENV === "production") {
-      if (!verifyMercadoPagoSignature(rawBody, signature, mpSecret)) {
-        console.warn("MercadoPago webhook signature verification failed");
-        return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
-      }
-    }
 
     const paymentId =
       body.data?.id ||
       body.id ||
       body.data?.object?.id ||
       body.object?.id;
+
+    if (mpSecret && signature && paymentId) {
+      if (!verifyMercadoPagoSignature(paymentId, rawBody, signature, mpSecret)) {
+        console.warn("MercadoPago webhook signature verification failed");
+        return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+      }
+    }
 
     const topic =
       body.topic ||
