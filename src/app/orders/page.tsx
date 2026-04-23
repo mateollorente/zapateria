@@ -28,6 +28,25 @@ type Order = {
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cancelling, setCancelling] = useState<string | null>(null);
+
+  const handleCancelOrder = async (orderId: string) => {
+    if (!confirm("¿Seguro que deseas cancelar esta orden?")) return;
+    setCancelling(orderId);
+    try {
+      const res = await fetch(`/api/orders/${orderId}/cancel`, { method: "POST" });
+      if (res.ok) {
+        setOrders(orders.map(o => o.id === orderId ? { ...o, status: "CANCELLED" } : o));
+      } else {
+        const data = await res.json();
+        alert(data.error || "No se pudo cancelar la orden");
+      }
+    } catch (e) {
+      alert("Error de conexión");
+    } finally {
+      setCancelling(null);
+    }
+  };
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -111,6 +130,15 @@ export default function OrdersPage() {
                     >
                       Reintentar Pago
                     </a>
+                  )}
+                  {o.status === "PENDING" && (
+                    <button
+                      onClick={() => handleCancelOrder(o.id)}
+                      disabled={cancelling === o.id}
+                      className="px-4 py-2 bg-red-100 text-red-700 text-xs font-bold rounded-lg hover:bg-red-200 shadow-sm transition-colors disabled:opacity-50"
+                    >
+                      {cancelling === o.id ? "Cancelando..." : "Cancelar Orden"}
+                    </button>
                   )}
                 </div>
               </div>
