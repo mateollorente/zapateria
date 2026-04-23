@@ -50,7 +50,7 @@ export async function POST(req: Request) {
         }
       });
 
-      // Descontamos el stock para reservarlo.
+      // Reservamos stock para evitar sobreventa
       for (const item of cart.items) {
         await tx.productSize.update({
           where: { id: item.productSizeId },
