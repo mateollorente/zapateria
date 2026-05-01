@@ -67,10 +67,11 @@ export async function POST(req: Request) {
     const client = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN, options: { timeout: 5000 } });
     const preference = new Preference(client);
     
-    // Auto-detectamos la baseUrl para el callback (Válido en local y en VPS productivo)
-    const protocol = req.headers.get("x-forwarded-proto") || "http";
-    const host = req.headers.get("host") || "localhost:3000";   
-    const baseUrl = `${protocol}://${host}`;
+    // Usamos la URL configurada en el entorno o la URL de producción proporcionada
+    let baseUrl = process.env.NEXTAUTH_URL || "https://mateo.webshooks.com";
+    if (baseUrl.includes("localhost")) {
+      baseUrl = "https://mateo.webshooks.com";
+    }
 
     const itemsForMP = orderPayload.cartItems.map((item: any) => ({
        id: item.productSize.productId,
