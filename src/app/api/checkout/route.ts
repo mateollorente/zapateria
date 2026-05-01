@@ -85,11 +85,11 @@ export async function POST(req: Request) {
         items: itemsForMP,
         external_reference: orderPayload.newOrder.id,
         back_urls: {
-          success: `${baseUrl}/orders`,
+          success: `${baseUrl}/checkout/success`,
           pending: `${baseUrl}/orders`,
           failure: `${baseUrl}/cart`,
         },
-        auto_return: baseUrl.startsWith("https") ? "approved" : undefined,
+        auto_return: "approved",
         notification_url: `${baseUrl}/api/webhooks/mp`,
         statement_descriptor: "MUNDO ZAPATERIA"
       }

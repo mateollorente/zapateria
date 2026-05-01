@@ -33,4 +33,4 @@ services:
     restart: unless-stopped
     depends_on:
       - app
-    command: /bin/sh -c "while true; do curl -X POST http://app:3000/api/cron/cancel-pending; sleep 300; done"
+    command: /bin/sh -c "while true; do curl -X GET http://app:3000/api/cron/cancel-pending; sleep 300; done"
